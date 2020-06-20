@@ -1,20 +1,44 @@
-var express = require('express');
-var path = require('path');
-var cookieParser = require('cookie-parser');
-var logger = require('morgan');
+const express = require("express");
+const path = require("path");
+const cookieParser = require("cookie-parser");
+const bodyParser = require("body-parser");
+const logger = require("morgan");
+const passport = require("passport");
+const mongoose = require("mongoose");
+var cors = require("cors");
+require("dotenv").config();
 
-var indexRouter = require('./routes/index');
-var usersRouter = require('./routes/users');
+const indexRouter = require("./routes/index");
+const usersRouter = require("./routes/Users");
 
-var app = express();
+const app = express();
+const mongodConnect = process.env.MONGOLAB_URI;
 
-app.use(logger('dev'));
+mongoose.connect(mongodConnect);
+
+app.use(cors());
+app.use(
+  cors({
+    origin: ["*"],
+    methods: ["GET", "HEAD", "POST", "DELETE", "PUT", "PATCH", "OPTIONS"],
+    credentials: false,
+  })
+);
+app.use(logger("dev"));
 app.use(express.json());
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
-app.use(express.static(path.join(__dirname, 'public')));
+app.use("/public", express.static("public"));
+app.use(express.static(path.join(__dirname, "public")));
 
-app.use('/', indexRouter);
-app.use('/users', usersRouter);
+// Passport middleware
+app.use(passport.initialize());
+// Passport config
+require("./config/passport")(passport);
+
+app.use("/", indexRouter);
+app.use("/users", usersRouter);
 
 module.exports = app;
